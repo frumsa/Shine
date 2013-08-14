@@ -18,6 +18,8 @@ Shine.Plugins = {}
 local AutoLoadPath = "config://shine\\AutoLoad.json"
 local ExtensionPath = "lua/shine/extensions/"
 
+Shine.ExtensionPath = ExtensionPath
+
 --Here we collect every extension file so we can be sure it exists before attempting to load it.
 local Files = {}
 Shared.GetMatchingFileNames( ExtensionPath.."*.lua", true, Files )
@@ -27,6 +29,8 @@ local PluginFiles = {}
 for i = 1, #Files do
 	PluginFiles[ Files[ i ] ] = true
 end
+
+Shine.PluginFiles = PluginFiles
 
 local PluginMeta = {}
 PluginMeta.__index = PluginMeta

@@ -19,6 +19,7 @@ local Scripts = {
 	"lib/datatables.lua",
 	"lib/timer.lua",
 	"lib/query.lua",
+	"lib/lang.lua",
 	"core/shared/config.lua",
 	"core/client/commands.lua",
 	"core/shared/votemenu.lua",
