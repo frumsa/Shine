@@ -13,7 +13,7 @@
 		}
 
 	Core:
-		Add lua files under lua/shine/lang, each on being for a separate language.
+		Add lua files under lua/shine/lang, each one being for a separate language.
 		Names and contents as for plugins.
 
 	Language handling will be entirely client side and automatic. Clients will be sent either a straight translation ID
@@ -157,13 +157,27 @@ function Lang:Load( Lang )
 end
 
 --[[
+	Gets the table of strings for the given language.
+
+	Input: Language.
+	Output: Table of strings or nil.
+]]
+function Lang:GetStrings( Lang )
+	if not self.Strings[ Lang ] then
+		return self:Load( Lang ) and self.Strings[ Lang ] or nil
+	end
+
+	return self.Strings[ Lang ]
+end
+
+--[[
 	Gets the default language string for the given translation ID.
 
 	Input: ID.
 	Output: Default language translation or the input string.
 ]]
 function Lang:GetDefaultString( String )
-	local Strings = self.Strings[ DefaultLang ]
+	local Strings = self:GetStrings( DefaultLang )
 
 	return Strings and Strings[ String ] or String
 end
@@ -177,7 +191,7 @@ end
 function Lang:GetString( String )
 	local Lang = Locale.GetLocale():lower()
 
-	local Strings = self.Strings[ Lang ]
+	local Strings = self:GetStrings( Lang )
 
 	if not Strings then
 		if Lang == DefaultLang then
