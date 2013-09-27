@@ -1,23 +1,24 @@
 --[[
-Shine tournament mode
+Shine Pug Plugin 
 ]]
 
 local Shine = Shine
 local Notify = Shared.Message
 
 local Plugin = {}
-Plugin.Version = "0.3"
+Plugin.Version = "0.1"
 
 Plugin.HasConfig = true
-Plugin.ConfigName = "Tournament.json"
+Plugin.ConfigName = "Pug.json"
 Plugin.DefaultConfig =
 {
-    CaptainMode = false, -- Use Captain Mode
+    CaptainMode = true, -- Use Captain Mode
     Captains = {}, -- Captains ns2ids
     Warmup = false, -- Warmup enabled?
     Warmuptime = 5, --Warmup time in min    
     ForceTeams = false, --force teams to stay the same
     Teams = {},
+    NumPlayersNeeded == 1   
 }
 
 Plugin.CheckConfig = true
@@ -36,6 +37,7 @@ local Votes = 0
 local CaptainsOnline = 0
 local Warmup = false
 local RoundStarted = false
+local Captain {}
 
 function Plugin:Initialise()
     --dont load with incompatibel mods
@@ -73,7 +75,7 @@ function Plugin:CheckGameStart( Gamerules )
     if State ~= kGameState.Started or Warmup then return end
     return false 
 end
-
+	
 --[[
 Checks if there are enought vote to start round
 ]]
@@ -86,17 +88,25 @@ function Plugin:CheckVote()
     local playernumber = Server.GetNumPlayers()
     
     --if captainmode only active captains count
-    if self.Config.CaptainMode then playernumber = CaptainsOnline end
-    
+    if self.Config.CaptainMode then playernumber = CaptainsOnline end 
     
     if Votes >= playernumber then
     	Plugin:StartGame( Gamerules ) 
     	RoundStarted = true 
+    elseif CaptainsOnline <= 1 and playenumber >= numPlayersNeeded and then
+    	Shine:Notify( nil, "", "", "Pug Time! \n Pick your captain by typing !captain followed by a player name in chat.")
     end   
    
 end
 
 
+--[[
+Vote for captains 
+]]
+function Plugin:PickCaptain()
+	--check which captain has won the vote  at the end of the vote time if statment + for statment 2 condidtions
+	--add name to catpain list and captain online + if not greater 1
+end
 --Startgame
 function Plugin:StartGame( Gamerules )
     Gamerules:ResetGame()
@@ -138,10 +148,10 @@ function Plugin:ClientConfirmConnect(Client)
     --check which message should be shown to inform players
     local id = Client:GetUserId()
 	if not self.Config.CaptainMode then Shine:Notify( Client, "", "", "Tournamentmode is enabled!. Type !rdy into chat when you are ready")
-	elseif self.Captains[id] == true then Shine:Notify( Client, "", "", "Tournamentmode is enabled!. Type !rdy into chat when you are ready.\n Chosse your teammates with !choose")
-        else Shine:Notify( Client, "", "", "Tournamentmode is enabled!. Wait until a Teamcaptain picks you.") end
+	elseif self.Captains[id] == true then Shine:Notify( Client, "", "", "Your are a team captain! Choose your teammates with !choose\n Type !rdy into chat when you are ready.")
+        else Shine:Notify( Client, "", "", "Captains are picking Teams!") end
 
-    -- if player isalready in a team with forceteams enabled we put him back into choosen team
+    -- if player is already in a team with forceteams enabled we put him back into choosen team
     if self.Config.ForceTeams then        
         if self.Config.Teams[id] then
             Gamerules:JoinTeam( Client:GetPlayer(), self.Config.Teams[id], nil, true )     
@@ -245,6 +255,16 @@ function Plugin:CreateCommands()
         Plugin:EndWarmuptime()       
     end)
     EndWarmup:Help ("Ends Warmup time")
+
+    local Choose = self:BindCommand( "sh_captain","captain" ,function(Client, player)
+        if self.Config.Captainmode and self.Config.Captains[Client:GetUserId()] == false then
+            local Player = player:GetPlayer()
+		Plugin:PickCaptains()
+	
+        end
+    end,true)
+    Choose:AddParam{ Type = "client"}    
+    Choose:Help ("Type the name of the player to place him/her on your team.")
     
     local Choose = self:BindCommand( "sh_choose","choose" ,function(Client, player)
         if self.Config.Captainmode and self.Config.Captains[Client:GetUserId()] == true then
@@ -255,7 +275,7 @@ function Plugin:CreateCommands()
         end
     end,true)
     Choose:AddParam{ Type = "client"}    
-    Choose:Help ("Choose Player with the given name for you team ")
+    Choose:Help ("Type the name of the player to place him/her on your team.")
     
     local Clearteams = self:BindCommand( "sh_clearteams","clearteams" ,function()
         self.Config.Teams = {}
